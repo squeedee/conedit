@@ -21,9 +21,6 @@
   Object
   (render [this]
     (dom/ul nil
-      (map resource-item (:resources (om/props this)))
-      (dom/button
-        #js {:onClick #(om/transact! this '[(add-resource)])}
-        "Add"))))
+      (map resource-item (:resources (om/props this))))))
 
 (def resource-list (om/factory ResourceList))

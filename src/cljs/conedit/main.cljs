@@ -9,19 +9,34 @@
 
 (def app-state
   (atom {
-         :resources
-         [{:name "pivnet-master"}
-          {:name "pivnet-develop"}
-          ]}))
+         :resources [
+                     {:name "pivnet-master"}
+                     {:name "pivnet-develop"}]
+         :editing   false}))
 
+(defui ResourceEditor
+  Object
+  (render [this]
+    (dom/div nil "editor!")))
+
+(def resource-editor (om/factory ResourceEditor))
+
+(defn edit-button [this]
+  (dom/button
+    #js {:onClick #(om/transact! this '[(edit-resource)])}
+    "Add"))
 
 (defui App
   static om/IQuery
   (query [this]
-    [{:root-resources (om/get-query resource-list/ResourceList)}])
+    [{:root-resources (om/get-query resource-list/ResourceList)} :editing])
   Object
   (render [this]
-    (dom/div nil (resource-list/resource-list (:root-resources (om/props this))))))
+    (let [{:keys [editing root-resources]} (om/props this)]
+      (dom/div nil
+        (resource-list/resource-list root-resources)
+        (if-not editing (edit-button this))
+        (if editing (resource-editor))))))
 
 (def reconciler
   (om/reconciler {:state  app-state

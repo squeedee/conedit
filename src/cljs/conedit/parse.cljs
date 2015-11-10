@@ -1,5 +1,4 @@
-(ns conedit.parse
-  )
+(ns conedit.parse)
 
 (defmulti read (fn [env key params] key))
 
@@ -13,5 +12,10 @@
   {:value {:resources (:value (read env :resources params))}})
 
 
-(defn mutate [{:keys [state] :as env} key params]
+(defmulti mutate (fn [env key params] key))
+
+(defmethod mutate 'add-thing [{:keys [state] :as env} key params]
   {:action #(swap! state update-in [:resources] conj {:name "New!"})})
+
+(defmethod mutate 'edit-resource [{:keys [state] :as env} key params]
+  {:action #(swap! state assoc :editing true)})
