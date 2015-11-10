@@ -11,13 +11,33 @@
   (atom {
          :resources [
                      {:name "pivnet-master"}
-                     {:name "pivnet-develop"}]
-         :editing   false}))
+                     {:name "pivnet-develop"}
+                     ]
+         :editor nil}))
+
+
+(defn submit [this name]
+  (om/transact! this [(list 'save-resource {:name name}) :editor])
+
+  )
 
 (defui ResourceEditor
+  static om/IQuery
+  (query [this]
+    [:name])
   Object
   (render [this]
-    (dom/div nil "editor!")))
+    (dom/div nil
+      (dom/input #js {:ref "editField" :type "text"} )
+      (dom/button #js {
+                      :onClick
+                      (fn [_]
+                        (let [node (dom/node this "editField")]
+                          (submit this (.-value node)))
+                        )}
+        "Submit")
+      )))
+
 
 (def resource-editor (om/factory ResourceEditor))
 
@@ -29,14 +49,16 @@
 (defui App
   static om/IQuery
   (query [this]
-    [{:root-resources (om/get-query resource-list/ResourceList)} :editing])
+    [{:root-resources (om/get-query resource-list/ResourceList)}
+     {:editor (om/get-query ResourceEditor)}])
   Object
   (render [this]
-    (let [{:keys [editing root-resources]} (om/props this)]
+    (let [{:keys [editor root-resources]} (om/props this)]
+      (println (om/props this))
       (dom/div nil
         (resource-list/resource-list root-resources)
-        (if-not editing (edit-button this))
-        (if editing (resource-editor))))))
+        (if-not editor (edit-button this))
+        (if editor (resource-editor this))))))
 
 (def reconciler
   (om/reconciler {:state  app-state
@@ -52,6 +74,10 @@
 
   (def p (om/parser {:read parse/read :mutate parse/mutate}))
 
-  (p {:state app-state} [{:root-resources [{:resources [:name]}]}] :remote)
+  (p {:state app-state} [:foo] true)
+
+  @app-state
+
+
 
   )

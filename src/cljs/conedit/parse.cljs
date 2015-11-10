@@ -18,4 +18,7 @@
   {:action #(swap! state update-in [:resources] conj {:name "New!"})})
 
 (defmethod mutate 'edit-resource [{:keys [state] :as env} key params]
-  {:action #(swap! state assoc :editing true)})
+  {:action #(swap! state assoc :editor {:name ""})})
+
+(defmethod mutate 'save-resource [{:keys [state] :as env} key params]
+  {:action #(swap! state assoc :editor nil)})
