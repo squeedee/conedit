@@ -3,6 +3,8 @@
             [om.next :as om :refer-macros [defui]]
             [om.dom :as dom]))
 
+(enable-console-print!)
+
 
 (def app-state
   (atom {
@@ -11,21 +13,24 @@
           {:name "pivnet-develop"}
           ]}))
 
-(declare reconciler)
-
-
 (defui ResourceItem
+  static om/IQuery
+  (query [this]
+    [:name])
   Object
   (render [this]
-    (dom/li nil (:name (om/props this)))))
+    (dom/li nil (str (:name (om/props this)) " " (:foo (om/props this))))))
 
 (def resource-item (om/factory ResourceItem {:keyfn :name}))
 
 (defui ResourceList
+  static om/IQuery
+  (query [this]
+    [{:resources (om/get-query ResourceItem)}])
   Object
   (render [this]
     (dom/ul nil
-      (map resource-item (om/props this))
+      (map resource-item (:resources (om/props this)))
       (dom/button
         #js {:onClick #(om/transact! reconciler '[(add-resource)])}
         "Add"))))
@@ -35,17 +40,23 @@
 (defui App
   static om/IQuery
   (query [this]
-    [:resources])
+    [{:root-resources (om/get-query ResourceList)}])
   Object
   (render [this]
-    (dom/div nil (resource-list (:resources (om/props this))))))
+    (dom/div nil (resource-list (:root-resources (om/props this))))))
 
-; env is more than just the app-atom
-(defn read [{:keys [state] :as env} key params]
+
+(defmulti read (fn [env key params] key))
+
+(defmethod read :default [{:keys [state] :as env} key params]
   (let [data @state]
-    (if-let [[_ resources] (find data key)]
-      {:value resources}
+    (if-let [[_ value] (find data key)]
+      {:value value}
       {:value :not-found})))
+
+(defmethod read :root-resources [{:keys [state] :as env} key params]
+  {:value {:resources (:value (read env :resources params))}})
+
 
 (defn mutate [{:keys [state] :as env} key params]
   {:action #(swap! state update-in [:resources] conj {:name "New!"})}
