@@ -16,7 +16,7 @@
 
 
 (defn submit [this resource]
-  (om/transact! this [(list 'save-resource {:resource resource}) :editor]))
+  (om/transact! this [(list 'save-resource resource) :editor :resources]))
 
 (defui ResourceEditor
   static om/IQuery
@@ -45,13 +45,13 @@
 (defui App
   static om/IQuery
   (query [this]
-    [{:root-resources (om/get-query resource-list/ResourceList)}
+    [{:resources (om/get-query resource-list/ResourceItem)}
      {:editor (om/get-query ResourceEditor)}])
   Object
   (render [this]
-    (let [{:keys [editor root-resources]} (om/props this)]
+    (let [{:keys [editor resources]} (om/props this)]
       (dom/div nil
-        (resource-list/resource-list root-resources)
+        (resource-list/resource-list resources)
         (if-not editor (edit-button this))
         (if editor (resource-editor (:editor (om/props this))))))))
 
@@ -59,7 +59,7 @@
   (.send XhrIo "http://localhost:8080/api"
     (fn [e] (let [response (cljs.reader/read-string (.getResponseText (.-target e)))]
               (response-handler response)))
-    "GET" (pr-str (:remote data-to-send))
+    "POST" (pr-str (:remote data-to-send))
     #js {}))
 
 

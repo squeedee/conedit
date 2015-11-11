@@ -9,14 +9,16 @@
       {:value :not-found
        })))
 
-(defmethod read :root-resources [{:keys [state] :as env} key params]
+(defmethod read :resources [{:keys [state] :as env} key params]
   (let [resources (:resources @state)]
-    (if resources
-      {:value {:resources resources}}
-      {:value {:resources []}
-       :remote true})))
+    (println (pr-str (:target env)))
 
-; {:value {:resources (:value (read env :resources params))}}
+    (if resources
+      (if (:target env)
+        {:value resources :remote true}
+        {:value resources})
+      {:value []
+       :remote true})))
 
 (defmulti mutate (fn [env key params] key))
 
@@ -32,8 +34,10 @@
              (fn [s]
                (-> s
                  (assoc :editor false)
-                 (update-in [:resources] conj (:resource params)))))
+                 )))
    :remote true})
+
+#_(update-in [:resources] conj params)
 
 (defmethod mutate 'update-resource [{:keys [state]} _ params]
   {:action #(swap! state update-in [:editor] merge params)})
