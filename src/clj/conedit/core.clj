@@ -21,7 +21,9 @@
   (bidi.ring/make-handler
     ["/"
      {""    (fn [r] (ring-response/resource-response "index.html" {:root "public"}))
-      "api" (fn [r] {:status  200
+      "api" (fn [r]
+              (println r)
+              {:status  200
                      :headers {"content-type" "text/plain"}
                      :body    (pr-str @database)})}]))
 

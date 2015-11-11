@@ -11,12 +11,12 @@
 (enable-console-print!)
 
 (def app-state
-  (atom {:resources []
+  (atom {:resources nil
          :editor false}))
 
 
-(defn submit [this name]
-  (om/transact! this [(list 'save-resource {:name name}) :editor]))
+(defn submit [this resource]
+  (om/transact! this [(list 'save-resource {:resource resource}) :editor]))
 
 (defui ResourceEditor
   static om/IQuery
@@ -27,11 +27,11 @@
     (dom/div nil
       (dom/input #js {:ref "editField" :type "text"
                       :onBlur (fn [e]
-                                 (om/transact! this [(list 'update-resource {:name (.. e -target -value)})]))} )
-      (dom/button #js {
-                      :onClick (fn [_]
-                                 (let [node (dom/node this "editField")]
-                          (submit this (.-value node))))}
+                                 (om/transact!
+                                   this
+                                   [(list 'update-resource {:name (.. e -target -value)})]))} )
+      (dom/button #js {:onClick (fn [_]
+                                  (submit this (om/props this)))}
         "Submit"))))
 
 
@@ -50,26 +50,35 @@
   Object
   (render [this]
     (let [{:keys [editor root-resources]} (om/props this)]
-      (println (om/props this))
       (dom/div nil
         (resource-list/resource-list root-resources)
         (if-not editor (edit-button this))
-        (if editor (resource-editor this))))))
+        (if editor (resource-editor (:editor (om/props this))))))))
+
+(defn api-request [data-to-send response-handler]
+  (.send XhrIo "http://localhost:8080/api"
+    (fn [e] (let [response (cljs.reader/read-string (.getResponseText (.-target e)))]
+              (response-handler response)))
+    "GET" (pr-str (:remote data-to-send))
+    #js {}))
+
 
 (def reconciler
-  (om/reconciler {:state  app-state
-                  :parser (om/parser {:read parse/read :mutate parse/mutate})}))
+  (om/reconciler {:state   app-state
+                  :parser  (om/parser {:read parse/read :mutate parse/mutate})
+                  :send    (fn [data-to-send response-handler]
+                             (.log js/console (pr-str [:send data-to-send]))
+                             (api-request data-to-send response-handler))
+                  :merge-tree merge
+                  :remotes [:remote]}))
+
 
 (om/add-root! reconciler
   App (gdom/getElement "app"))
 
-(defn api-request []
-  (.send XhrIo "http://localhost:8080/api"
-                    (fn [e] (let [response (cljs.reader/read-string (.getResponseText (.-target e)))]
-                              (swap! app-state merge response)))
-                    "GET" "" #js {}))
 
-(api-request)
+
+;(api-request)
 
 (comment
 

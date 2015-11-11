@@ -6,11 +6,17 @@
   (let [data @state]
     (if-let [[_ value] (find data key)]
       {:value value}
-      {:value :not-found})))
+      {:value :not-found
+       })))
 
 (defmethod read :root-resources [{:keys [state] :as env} key params]
-  {:value {:resources (:value (read env :resources params))}})
+  (let [resources (:resources @state)]
+    (if resources
+      {:value {:resources resources}}
+      {:value {:resources []}
+       :remote true})))
 
+; {:value {:resources (:value (read env :resources params))}}
 
 (defmulti mutate (fn [env key params] key))
 
@@ -26,7 +32,8 @@
              (fn [s]
                (-> s
                  (assoc :editor false)
-                 (update-in [:resources] conj (:editor s)))))})
+                 (update-in [:resources] conj (:resource params)))))
+   :remote true})
 
 (defmethod mutate 'update-resource [{:keys [state]} _ params]
   {:action #(swap! state update-in [:editor] merge params)})
