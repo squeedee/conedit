@@ -32,10 +32,12 @@
         (root-handler))
       {:port port})))
 
+(defn -main []
+  (println "Launching!")
+  (start-server {:dev false :port 3000}))
+
 (comment
   (start-server {})
-
-
 
   *e
   )
