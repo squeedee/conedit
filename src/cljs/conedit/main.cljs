@@ -3,23 +3,20 @@
             [om.next :as om :refer-macros [defui]]
             [om.dom :as dom]
             [conedit.parse :as parse]
-            [conedit.resource-list :as resource-list]))
+            [conedit.resource-list :as resource-list]
+            [cljs.reader]
+            )
+  (:import [goog.net XhrIo]))
 
 (enable-console-print!)
 
 (def app-state
-  (atom {
-         :resources [
-                     {:name "pivnet-master"}
-                     {:name "pivnet-develop"}
-                     ]
+  (atom {:resources []
          :editor false}))
 
 
 (defn submit [this name]
-  (om/transact! this [(list 'save-resource {:name name}) :editor])
-
-  )
+  (om/transact! this [(list 'save-resource {:name name}) :editor]))
 
 (defui ResourceEditor
   static om/IQuery
@@ -66,6 +63,13 @@
 (om/add-root! reconciler
   App (gdom/getElement "app"))
 
+(defn api-request []
+  (.send XhrIo "http://localhost:8080/api"
+                    (fn [e] (let [response (cljs.reader/read-string (.getResponseText (.-target e)))]
+                              (swap! app-state merge response)))
+                    "GET" "" #js {}))
+
+(api-request)
 
 (comment
 
@@ -77,6 +81,11 @@
 
   @app-state
 
+ (js/alert "foo")
 
+  (.send XhrIo "http://localhost:8080/api"
+    (fn [e] (let [response (cljs.reader/read-string (.getResponseText (.-target e)))]
+              response))
+    "GET" "" #js {})
 
   )

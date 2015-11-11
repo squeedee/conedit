@@ -10,15 +10,25 @@
    :headers {"content-type" "text/plain"}
    :body    "hello1!"})
 
+
+(def database
+  (atom
+    {:resources [
+                 {:name "pivnet-master"}
+                 {:name "pivnet-develop"}]}))
+
 (def bidi-handler
   (bidi.ring/make-handler
     ["/"
-     {"" (fn [r] (ring-response/resource-response "index.html" {:root "public"}))}]))
+     {""    (fn [r] (ring-response/resource-response "index.html" {:root "public"}))
+      "api" (fn [r] {:status  200
+                     :headers {"content-type" "text/plain"}
+                     :body    (pr-str @database)})}]))
 
-
-(defn root-handler [] (fn [request]
-                        (or (ring-resources/resource-request request "public" {:loader nil})
-                          (bidi-handler request))))
+(defn root-handler []
+  (fn [request]
+    (or (ring-resources/resource-request request "public" {:loader nil})
+      (bidi-handler request))))
 
 (defn live-handler [req]
   ((root-handler) req))
