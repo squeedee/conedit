@@ -21,4 +21,12 @@
   {:action #(swap! state assoc :editor {:name ""})})
 
 (defmethod mutate 'save-resource [{:keys [state] :as env} key params]
-  {:action #(swap! state assoc :editor nil)})
+  {:action #(swap!
+             state
+             (fn [s]
+               (-> s
+                 (assoc :editor false)
+                 (update-in [:resources] conj (:editor s)))))})
+
+(defmethod mutate 'update-resource [{:keys [state]} _ params]
+  {:action #(swap! state update-in [:editor] merge params)})

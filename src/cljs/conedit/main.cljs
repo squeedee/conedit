@@ -13,7 +13,7 @@
                      {:name "pivnet-master"}
                      {:name "pivnet-develop"}
                      ]
-         :editor nil}))
+         :editor false}))
 
 
 (defn submit [this name]
@@ -28,15 +28,14 @@
   Object
   (render [this]
     (dom/div nil
-      (dom/input #js {:ref "editField" :type "text"} )
+      (dom/input #js {:ref "editField" :type "text"
+                      :onBlur (fn [e]
+                                 (om/transact! this [(list 'update-resource {:name (.. e -target -value)})]))} )
       (dom/button #js {
-                      :onClick
-                      (fn [_]
-                        (let [node (dom/node this "editField")]
-                          (submit this (.-value node)))
-                        )}
-        "Submit")
-      )))
+                      :onClick (fn [_]
+                                 (let [node (dom/node this "editField")]
+                          (submit this (.-value node))))}
+        "Submit"))))
 
 
 (def resource-editor (om/factory ResourceEditor))
